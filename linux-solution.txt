@@ -1,0 +1,83 @@
+1. Configure smtp in localhost.
+
+>> sudo apt install postfix
+>> cp /etc/postfix/main.cf /etc/postfix/main.cf.backup
+>> nano /etc/postfix/main.cf
+    (inet_interfaces = loopback-only)
+>> systemctl enable postfix
+>> ufw allow postfix
+>> ufw allow "Postfix SMTPS"
+>> ufw allow "Postfix Submission"
+>> apt install bsd-mailx
+>> mailx example@domain.com
+
+2. Create a user in your localhost, which should not be able to execute the 
+sudo command.
+
+-> When we create a user it does not have sudo access by default.
+
+3. Configure your system in such a way that when a user type and executes a 
+describe command from anywhere of the system it must list all the files and
+folders of the user's current directory.
+
+>> vi /etc/bash.bashrc
+    (
+        alias describe='ls'
+    )
+
+4. Users can put a compressed file at any path of the linux file system. 
+The name of the file will be research and the extension will be of compression 
+type, example for gzip type extension will be .gz.
+You have to find the file and check the compression type and uncompress it.
+
+>> vi uncompress.sh
+    (
+        #!/bin/bash
+
+        find / -type f -name "research.*" 2>/dev/null | while read -r file; do
+            extension=$(file -b --mime-type "$file")
+
+            case "$extension" in
+                application/gzip)
+                    echo "Found gzip file: $file"
+                    gzip -d "$file"
+                    ;;
+                application/x-tar)
+                    echo "Found a tar file: $file"
+                    tar -xvf "$file"
+                    ;;
+                application/zip)
+                    echo "Found a zip file: $file"
+                    unzip "$file"
+                    ;;
+                *)
+                    echo "Unknown file: $file"
+                    ;;
+            esac
+        done
+    )
+>> sudo ./uncompress.sh
+
+5. Configure your system in such a way that any user of your system creates a
+file then there should not be permission to do any activity in that file.
+
+>> vi /etc/bash.bashrc
+    (umask 777)
+
+6. Create a service with the name showtime , after starting the service, every
+minute it should print the current time in a file in the user home directory.
+
+>> vi showtime.sh
+    (
+        #!/bin/bash
+
+        while true; do
+                date +%H:%M:%S >> /home/sigmoid/showtime.log
+                sleep 60
+        done
+    )
+>> chmod a+x showtime.sh
+>> sudo nano /etc/systemd/system/showtime.service
+>> sudo systemctl daemon-reload
+>> sudo systemctl start showtime
+>> sudo systemctl stop showtime
